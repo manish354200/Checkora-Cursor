@@ -339,7 +339,7 @@ body {
     border-radius: 2px;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
     max-width: 100%;
-    box-sizing: border-box;
+    box-sizing: content-box;
     position: relative;
 }
 
@@ -450,11 +450,11 @@ body {
 .square.last-move.light { background-color: var(--sq-last-light); }
 .square.last-move.dark  { background-color: var(--sq-last-dark); }
 .custom-highlight.light {
-    background-color: rgba(80, 180, 255, 0.45) !important;
+    background-color: rgba(80, 180, 255, 0.45);
 }
 
 .custom-highlight.dark {
-    background-color: rgba(40, 120, 220, 0.55) !important;
+    background-color: rgba(40, 120, 220, 0.55);
 }
 
 .square.premove.light {
@@ -1464,11 +1464,11 @@ body {
 @keyframes pulse-check {
     0%, 100% {
         box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.85) inset;
-        background: rgba(220, 38, 38, 0.15) !important;
+        background: rgba(220, 38, 38, 0.15);
     }
     50% {
         box-shadow: 0 0 0 3px rgba(220, 38, 38, 1) inset;
-        background: rgba(220, 38, 38, 0.3) !important;
+        background: rgba(220, 38, 38, 0.3);
     }
 }
 

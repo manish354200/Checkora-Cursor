@@ -540,7 +540,6 @@
                         d.onclick = () => onClick(r, c);
                         d.oncontextmenu = (e) => {
                             e.preventDefault();
-                            e.stopPropagation();
                             toggleSquareHighlight(r, c);
                         };
                         d.ondragover = e => e.preventDefault();
