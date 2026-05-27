@@ -4,6 +4,7 @@ import json
 import time
 import hashlib
 import secrets
+import re
 import secrets as secrets_module
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.conf import settings
@@ -32,6 +33,16 @@ from .engine import ChessGame
 from .models import GameResult
 logger = logging.getLogger(__name__)
 from game.services import cleanup_stale_games
+
+_SAFE_NOTATION = re.compile(
+    r'^([KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](=[QRBN])?[+#]?'  # standard moves
+    r'|O-O(-O)?[+#]?)$' # castling
+)
+
+def _sanitize_notation(notation):
+    if not isinstance(notation, str):
+        return ''
+    return notation if _SAFE_NOTATION.match(notation) else ''
 
 def landing(request):
     """Render the landing page introduction to Checkora."""
@@ -95,6 +106,8 @@ def make_move(request):
     )
 
     if success:
+        for move in game.move_history:
+            move['notation'] = _sanitize_notation(move.get('notation', ''))
         request.session['game'] = game.to_dict()
         request.session.modified = True
         if game_status == 'checkmate':
@@ -433,6 +446,8 @@ def ai_move(request):
     )
 
     if success:
+        for move in game.move_history:
+            move['notation'] = _sanitize_notation(move.get('notation', ''))
         request.session['game'] = game.to_dict()
         request.session.modified = True
 
