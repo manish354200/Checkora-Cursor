@@ -423,8 +423,8 @@
           <h4>Legal</h4>
           <ul class="footer-nav-list">
             <li><a href="{% url 'privacy' %}" class="footer-link">Privacy Policy</a></li>
-            <li><a href="#" class="footer-link" onclick="document.getElementById('termsModal').style.display='flex'; return false;">Terms & Conditions</a></li>
-            <li><a href="{% url 'contact' %}" class="footer-link">Contact Us</a></li>
+            <li><a href="#" class="footer-link" onclick="openTermsModal(); return false;">Terms & Conditions</a></li>     
+             <li><a href="{% url 'contact' %}" class="footer-link">Contact Us</a></li>
           </ul>
         </div>
       </div>
@@ -447,14 +447,12 @@
         </div>
       </div>
     </footer>
-
-    <div id="termsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
-      <div style="position:relative; background:#131522; border:1px solid rgba(240,192,64,0.2); border-radius:16px; width:90%; max-width:700px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+        <div tabindex="-1" style="position:relative; background:#131522; border:1px solid rgba(240,192,64,0.2); border-radius:16px; width:90%; max-width:700px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">
           
           <!-- Header -->
-          <div style="padding:24px 28px 16px; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
-              <h1 style="color:#f0c040; font-size:1.6rem; font-weight:700; letter-spacing:-0.3px;">Terms and Conditions</h1>
-              <button onclick="document.getElementById('termsModal').style.display='none'" style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center;">✕</button>
+          <div style="padding:24px 28px 16px; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">               <h1 id="termsModalTitle" style="color:#f0c040; font-size:1.6rem; font-weight:700; letter-spacing:-0.3px;">Terms and Conditions</h1>
+         <button type="button" aria-label="Close terms and conditions" onclick="closeTermsModal()" style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center;">✕</button>
           </div>
   
           <!-- Scrollable Content -->
@@ -514,25 +512,41 @@
   
           <!-- Footer: I Agree button -->
           <div style="padding:16px 28px; border-top:1px solid rgba(255,255,255,0.07); display:flex; justify-content:flex-end; flex-shrink:0; background:#131522;">
-              <button onclick="document.getElementById('termsModal').style.display='none'" style="background:linear-gradient(135deg,#f0c040,#d4a020); color:#0f0f1a; border:none; padding:10px 28px; border-radius:8px; font-weight:700; font-size:0.95rem; cursor:pointer; transition:all 0.2s ease; box-shadow:0 4px 16px rgba(240,192,64,0.3);">I Agree</button>
+            <button type="button" onclick="document.getElementById('termsModal').style.display='none'" style="background:linear-gradient(135deg,#f0c040,#d4a020); color:#0f0f1a; border:none; padding:10px 28px; border-radius:8px; font-weight:700; font-size:0.95rem; cursor:pointer; transition:all 0.2s ease; box-shadow:0 4px 16px rgba(240,192,64,0.3);">I Agree</button>
           </div>
   
       </div>
   </div>
-
-    <div id="backToTopWrapper">
-      <span id="backToTopTooltip">Back to Top</span>
-      <button id="backToTopBtn" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
-        <span class="btn-arrow">^</span>
-      </button>
-  </div>
-  
   <script>
-      const backToTopWrapper = document.getElementById('backToTopWrapper');
-      window.addEventListener('scroll', () => {
-          backToTopWrapper.classList.toggle('visible', window.scrollY > 300);
+    (function() {
+      const modal = document.getElementById('termsModal');
+      const modalInner = modal.querySelector('[tabindex="-1"]');
+      let lastFocused;
+  
+      function openTermsModal() {
+        lastFocused = document.activeElement;
+        modal.style.display = 'flex';
+        modalInner.focus();
+      }
+  
+      function closeTermsModal() {
+        modal.style.display = 'none';
+        if (lastFocused) lastFocused.focus();
+      }
+  
+      window.openTermsModal = openTermsModal;
+      window.closeTermsModal = closeTermsModal;
+  
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+          closeTermsModal();
+        }
       });
+  
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeTermsModal();
+      });
+    })();
   </script>
-
   </body>
 </html>
