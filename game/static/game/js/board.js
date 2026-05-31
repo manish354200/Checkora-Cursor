@@ -3385,8 +3385,11 @@
                 (shareModal?.style.display === 'flex') ||
                 (rulebookModal?.style.display === 'flex') ||
                 fenOverlay?.classList.contains('active') ||
+                promoOverlay?.classList.contains('active') ||
                 confirmOverlay?.classList.contains('active') ||
                 drawOverlay?.classList.contains('active') ||
+                (document.getElementById('sideModal')?.style.display === 'flex') ||
+                (document.getElementById('leaveConfirmOverlay')?.style.display === 'flex') ||
                 gameOverOverlay?.classList.contains('active') ||
                 welcomeOverlay?.classList.contains('active');
             // Allow Escape to close overlays
