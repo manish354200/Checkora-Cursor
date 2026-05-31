@@ -24,6 +24,7 @@ class Command(RunserverCommand):
                 f'\nOpen this URL in your browser (HTTP only, not HTTPS):\n'
                 f'  {local_url}\n'
                 f'If the browser upgrades to https://, disable secure-connection '
-                f'settings or clear HSTS for {host} in chrome://net-internals/#hsts\n'
+                f'settings or clear cached HSTS for {host} '
+                f'(Chrome/Brave: chrome://net-internals/#hsts).\n'
             )
         )

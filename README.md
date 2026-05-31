@@ -584,8 +584,8 @@ If the browser shows `ERR_SSL_PROTOCOL_ERROR` or the terminal prints *"You're ac
 *   **Resolution:**
     1. Copy the example env file if you have not already: `copy .env.example .env` (Windows) or `cp .env.example .env` (macOS/Linux).
     2. Copy the exact URL from the terminal, for example **`http://127.0.0.1:8000/`** — include `http://` and do not let the browser change it to `https://`.
-    3. In Chrome/Brave, disable "Always use secure connections" / "Upgrade connections to HTTPS" for local development.
-    4. Clear cached HSTS for `127.0.0.1`: Chrome/Brave → `chrome://net-internals/#hsts` → delete `127.0.0.1`.
+    3. Disable your browser's HTTPS-upgrade setting for local development (for example, Chrome/Brave: "Always use secure connections" / "Upgrade connections to HTTPS").
+    4. Clear cached HSTS for `127.0.0.1` if the browser keeps forcing HTTPS (Chrome/Brave: `chrome://net-internals/#hsts`; steps vary by browser).
 
 ## Contributor Support & Feedback
 
