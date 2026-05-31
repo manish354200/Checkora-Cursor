@@ -106,7 +106,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Open `http://localhost:8000/` in your browser and start playing. Use `http://` (not `https://`) — the development server does not support SSL.
+Open **`http://127.0.0.1:8000/`** in your browser and start playing. The terminal shows this same address — always use **`http://`**, never **`https://`**, because the development server does not support SSL.
 
 ### Compile the C++ Engine _(optional but recommended)_
 
@@ -582,9 +582,9 @@ If the browser shows `ERR_SSL_PROTOCOL_ERROR` or the terminal prints *"You're ac
 
 *   **Resolution:**
     1. Copy the example env file if you have not already: `copy .env.example .env` (Windows) or `cp .env.example .env` (macOS/Linux).
-    2. Open **`http://localhost:8000/`** — include `http://` and prefer `localhost` over `127.0.0.1`.
+    2. Copy the exact URL from the terminal, for example **`http://127.0.0.1:8000/`** — include `http://` and do not let the browser change it to `https://`.
     3. In Chrome/Brave, disable "Always use secure connections" / "Upgrade connections to HTTPS" for local development.
-    4. Clear cached HSTS for local hosts: Chrome/Brave → `chrome://net-internals/#hsts` → delete `127.0.0.1` and `localhost`.
+    4. Clear cached HSTS for `127.0.0.1`: Chrome/Brave → `chrome://net-internals/#hsts` → delete `127.0.0.1`.
 
 ## Contributor Support & Feedback
 
