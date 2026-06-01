@@ -752,6 +752,110 @@ def handle_bestmove(turn, depth):
     print(f'BESTMOVE {best_move.fr} {best_move.fc} {best_move.tr} {best_move.tc}')
 
 
+def handle_notation(turn, fr, fc, tr, tc, promo='\0'):
+    piece = BOARD[fr][fc]
+    if is_empty(piece):
+        print('NOTATION ?')
+        return
+
+    type_ = piece.lower()
+    is_capture = not is_empty(BOARD[tr][tc])
+    files = "abcdefgh"
+
+    promo_char = '\0'
+    if is_promotion_move(piece, tr):
+        lower_promo = promo.lower()
+        if lower_promo not in ('q', 'r', 'b', 'n'):
+            lower_promo = 'q'
+        promo_char = lower_promo.upper()
+
+    # 1. Castling
+    if type_ == 'k':
+        if abs(tc - fc) == 2:
+            if tc == 6:
+                print('NOTATION O-O')
+                return
+            if tc == 2:
+                print('NOTATION O-O-O')
+                return
+
+    res = ""
+    if type_ == 'p':
+        # Diagonal move for a pawn is always a capture
+        if fc != tc:
+            res += files[fc]
+            res += 'x'
+        res += files[tc]
+        res += str(8 - tr)
+
+        if promo_char != '\0':
+            res += '='
+            res += promo_char
+
+    else:
+        res += type_.upper()
+
+        # Disambiguation: Check if other pieces of the same type can move to the same square
+        others = []
+        for r in range(8):
+            for c in range(8):
+                if r == fr and c == fc:
+                    continue
+                if BOARD[r][c] == piece:
+                    if validate_move(turn, r, c, tr, tc, True):
+                        m = Move(fr=r, fc=c, tr=tr, tc=tc)
+                        if not leaves_king_in_check(m, turn):
+                            others.append((r, c))
+
+        if others:
+            same_file = False
+            same_rank = False
+            for r, c in others:
+                if c == fc:
+                    same_file = True
+                if r == fr:
+                    same_rank = True
+
+            if not same_file:
+                res += files[fc]
+            elif not same_rank:
+                res += str(8 - fr)
+            else:
+                res += files[fc]
+                res += str(8 - fr)
+
+        if is_capture:
+            res += 'x'
+        res += files[tc]
+        res += str(8 - tr)
+
+    # Apply move temporarily to check for Check/Checkmate
+    src = BOARD[fr][fc]
+    dst = BOARD[tr][tc]
+    if promo_char != '\0':
+        BOARD[tr][tc] = promo_char if turn == 'white' else promo_char.lower()
+    else:
+        BOARD[tr][tc] = src
+    BOARD[fr][fc] = '.'
+
+    opponent = 'black' if turn == 'white' else 'white'
+    kpos = find_king(opponent)
+    if kpos[0] != -1 and is_square_attacked(kpos[0], kpos[1], turn):
+        opp_moves = generate_moves(opponent)
+        has_legal = False
+        for m in opp_moves:
+            if not leaves_king_in_check(m, opponent):
+                has_legal = True
+                break
+        res += "+" if has_legal else "#"
+
+    # Undo move
+    BOARD[fr][fc] = src
+    BOARD[tr][tc] = dst
+
+    print(f"NOTATION {res}")
+
+
 def run():
     tokens = iter(sys.stdin.read().split())
     for command in tokens:
@@ -826,6 +930,27 @@ def run():
             load_castling_rights(rights)
             load_en_passant(ep_row, ep_col)
             handle_bestmove(turn, depth)
+        elif command == 'NOTATION':
+            board64 = next(tokens)
+            rights = next(tokens)
+            turn = next(tokens)
+            ep_row = int(next(tokens))
+            ep_col = int(next(tokens))
+            fr = int(next(tokens))
+            fc = int(next(tokens))
+            tr = int(next(tokens))
+            tc = int(next(tokens))
+            
+            promo = '\0'
+            try:
+                promo = next(tokens)
+            except StopIteration:
+                pass
+                
+            load_board(board64)
+            load_castling_rights(rights)
+            load_en_passant(ep_row, ep_col)
+            handle_notation(turn, fr, fc, tr, tc, promo)
 
 
 if __name__ == '__main__':
