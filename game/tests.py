@@ -1576,9 +1576,63 @@ class SecureRegistrationTest(TestCase):
         EMAIL_HOST_PASSWORD='',
     )
     def test_inactive_email_reuses_existing_account(self):
-        """Re-registering with an inactive email should reuse the account."""
+        """Re-registering with different username but same email as inactive user should not reuse/hijack it."""
         old_user = User.objects.create_user(
             username='pendingplayer',
+            email='newchessplayer@example.com',
+            password='OldPassword456!',
+            is_active=False,
+        )
+        old_id = old_user.id
+        response = self.client.post(
+            '/register/',
+            data=self.VALID_PAYLOAD,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/verify-otp/')
+        
+        # Verify the inactive user was not updated/hijacked
+        not_reused = User.objects.get(id=old_id)
+        self.assertEqual(not_reused.username, 'pendingplayer')
+        self.assertTrue(not_reused.check_password('OldPassword456!'))
+        
+        # Verify no new user was created
+        self.assertFalse(User.objects.filter(username='newchessplayer').exists())
+
+    # --- 5. Inactive username conflict — preserved, not deleted ---------------
+
+    @override_settings(
+        DEBUG=True,
+        EMAIL_HOST_USER='',
+        EMAIL_HOST_PASSWORD='',
+    )
+    def test_inactive_username_is_preserved(self):
+        """Inactive accounts must be preserved but not updated/hijacked when email doesn't match."""
+        inactive = User.objects.create_user(
+            username='newchessplayer',
+            email='old@example.com',
+            password='OldPassword456!',
+            is_active=False,
+        )
+        response = self.client.post('/register/', data=self.VALID_PAYLOAD)
+        self.assertEqual(response.status_code, 302)
+        
+        self.assertEqual(User.objects.filter(username='newchessplayer').count(), 1)
+        self.assertTrue(User.objects.filter(id=inactive.id).exists())
+        inactive.refresh_from_db()
+        # Verify the inactive user email was not overwritten/hijacked
+        self.assertEqual(inactive.email, 'old@example.com')
+        self.assertTrue(inactive.check_password('OldPassword456!'))
+
+    @override_settings(
+        DEBUG=True,
+        EMAIL_HOST_USER='',
+        EMAIL_HOST_PASSWORD='',
+    )
+    def test_inactive_user_fully_matches_and_reuses_account(self):
+        """Re-registering with matching username and email of an inactive user should reuse the account."""
+        old_user = User.objects.create_user(
+            username='newchessplayer',
             email='newchessplayer@example.com',
             password='OldPassword456!',
             is_active=False,
@@ -1595,27 +1649,6 @@ class SecureRegistrationTest(TestCase):
         self.assertEqual(reused.email, 'newchessplayer@example.com')
         self.assertTrue(reused.check_password('StrongPass123!'))
         self.assertEqual(User.objects.filter(id=old_id).count(), 1)
-
-    # --- 5. Inactive username conflict — preserved, not deleted ---------------
-
-    @override_settings(
-        DEBUG=True,
-        EMAIL_HOST_USER='',
-        EMAIL_HOST_PASSWORD='',
-    )
-    def test_inactive_username_is_preserved(self):
-        """Inactive accounts must never be deleted during registration."""
-        inactive = User.objects.create_user(
-            username='newchessplayer',
-            email='old@example.com',
-            password='OldPassword456!',
-            is_active=False,
-        )
-        self.client.post('/register/', data=self.VALID_PAYLOAD)
-        self.assertEqual(User.objects.filter(username='newchessplayer').count(), 1)
-        self.assertTrue(User.objects.filter(id=inactive.id).exists())
-        inactive.refresh_from_db()
-        self.assertEqual(inactive.email, 'newchessplayer@example.com')
 
     # --- 6. Concurrent registration — IntegrityError handled ------------------
 
@@ -2043,6 +2076,35 @@ class AdditionalViewsSecurityAndLessonsTest(TestCase):
         self.assertEqual(user_b.email, 'inactive_b@example.com')
         self.assertFalse(user_a.check_password('NewPassword123!'))
         self.assertFalse(user_b.check_password('NewPassword123!'))
+
+    def test_inactive_username_hijack_prevention(self):
+        # Create an inactive user A
+        user_a = User.objects.create_user(
+            username='inactive_a',
+            email='inactive_a@example.com',
+            password='OldPassword123!',
+            is_active=False
+        )
+
+        # Attempt to register with User A's username but a new email (attacker's email)
+        payload = {
+            'username': 'inactive_a',
+            'email': 'attacker@example.com',
+            'password1': 'NewPassword123!',
+            'password2': 'NewPassword123!',
+        }
+
+        # Should fall back to generic verification flow to prevent enumeration/hijacking
+        response = self.client.post(reverse('register'), data=payload)
+        self.assertRedirects(response, reverse('verify_otp'))
+
+        # Verify User A's email is not changed and password is not updated
+        user_a.refresh_from_db()
+        self.assertEqual(user_a.email, 'inactive_a@example.com')
+        self.assertTrue(user_a.check_password('OldPassword123!'))
+
+        # Verify no User with attacker@example.com is created
+        self.assertFalse(User.objects.filter(email='attacker@example.com').exists())
 
     def test_resend_otp_post_only(self):
         # Verify GET returns 405 Method Not Allowed

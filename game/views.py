@@ -653,14 +653,21 @@ def register_view(request):
                         )
                         return redirect('verify_otp')
 
-                    inactive_match_ids = list(
-                        User.objects.filter(
+                    inactive_candidates = list(
+                        User.objects.select_for_update().filter(
                             Q(username__iexact=username) | Q(email__iexact=email),
                             is_active=False,
-                        ).select_for_update().values_list('id', flat=True).distinct()
+                        )
                     )
+                    exact_inactive_matches = [
+                        u for u in inactive_candidates
+                        if u.username.lower() == username.lower()
+                        and u.email.lower() == email.lower()
+                    ]
 
-                    if len(inactive_match_ids) > 1:
+                    # If there are matching inactive accounts but none is a full identity match,
+                    # trigger the generic dummy flow to prevent hijacking/enumeration.
+                    if inactive_candidates and len(exact_inactive_matches) != 1:
                         request.session['registration_user_id'] = -1
                         request.session['registration_email'] = email
                         dummy_otp = str(secrets.randbelow(900000) + 100000)
@@ -676,11 +683,7 @@ def register_view(request):
                         )
                         return redirect('verify_otp')
 
-                    inactive_user = (
-                        User.objects.select_for_update().get(id=inactive_match_ids[0])
-                        if inactive_match_ids
-                        else None
-                    )
+                    inactive_user = exact_inactive_matches[0] if exact_inactive_matches else None
 
                     if inactive_user:
                         user = inactive_user
