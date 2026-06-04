@@ -10,12 +10,14 @@ document.addEventListener(
         if (!data) {
             return;
         }
+        let examples = [];
 
-        const examples =
-            JSON.parse(
-                data.textContent
-            );
-
+        try {
+            examples = JSON.parse(data.textContent);
+        } catch (error) {
+            console.error("Failed to load lesson examples:", error);
+            return;
+        }
         let current = 0;
 
         const pieces = {
