@@ -155,6 +155,7 @@ def make_move(request):
         'captured_pieces': game.captured,
         'game_status': game_status,
         'draw_reason': game.draw_reason,
+        'threefold_warning': game.threefold_warning,
         'fen': game.generate_fen_key(),
         'pgn': game.generate_pgn(request.session.get('white_name', 'White'), request.session.get('black_name', 'Black')),
         'white_name': request.session.get('white_name', 'White'),
@@ -313,6 +314,7 @@ def resume_game(request):
         'black_name': request.session.get('black_name', 'Black'),
         'game_status': game.game_status,
         'draw_reason': game.draw_reason,
+        'threefold_warning': game.threefold_warning,
         'fen': game.generate_fen_key(),
         'pgn': game.generate_pgn(request.session.get('white_name', 'White'), request.session.get('black_name', 'Black')),
         'difficulty': request.session.get('difficulty', 'medium'),
@@ -380,6 +382,7 @@ def get_state(request):
         'pgn': game.generate_pgn(request.session.get('white_name', 'White'), request.session.get('black_name', 'Black')),
         'game_status': game.game_status,
         'draw_reason': game.draw_reason,
+        'threefold_warning': game.threefold_warning,
     })
 
 
@@ -479,7 +482,7 @@ def ai_move(request):
             record_game_result(request, game.mode, winner, 'checkmate', game.player_color, moves=game.move_history)
         elif game_status in ('stalemate', 'draw'):
             record_game_result(request, game.mode, 'draw', game.draw_reason or 'stalemate', game.player_color, moves=game.move_history)
-
+    
     return JsonResponse({
         'valid': success,
         'message': message,
@@ -495,6 +498,7 @@ def ai_move(request):
         'ai_move': best,
         'game_status': game_status,
         'draw_reason': game.draw_reason,
+        'threefold_warning': game.threefold_warning,
         'fen': game.generate_fen_key(),
         'pgn': game.generate_pgn(request.session.get('white_name', 'White'), request.session.get('black_name', 'Black')),
         'white_name': request.session.get('white_name', 'White'),

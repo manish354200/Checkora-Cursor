@@ -1554,6 +1554,15 @@
                             board = parseBoard(data.board);
                             turn = data.current_turn;
 
+                            const hasThreefoldWarning = data.threefold_warning;
+
+                            if (hasThreefoldWarning) {
+                                showStatus(
+                                    '⚠️ This position has appeared twice. One more repetition will trigger a draw.',
+                                    false
+                                );
+                            }
+                            
                             // Daily Puzzle Validation
                             if (dailyPuzzleMode && currentPuzzle && !puzzleAnalyzing) {
 
@@ -1695,7 +1704,9 @@
                                 a11yMsg += checkMsg;
                             } else {
                                 highlightCheck();
-                                showStatus('', false);
+                                if (!hasThreefoldWarning) {
+                                    showStatus('', false);
+                                }
                             }
                             if (a11yMsg) announceMove(a11yMsg);
                         }
@@ -1771,7 +1782,14 @@
                             const mv = data.ai_move;
                             await animateMove(mv.from_row, mv.from_col, mv.to_row, mv.to_col);
                             board = parseBoard(data.board);
-                            turn = data.current_turn;
+
+                            if (data.threefold_warning) {
+                                showStatus(
+                                    '⚠️ This position has appeared twice. One more repetition will trigger a draw.',
+                                    false
+                                );
+                            }
+                            
                             lastMove = { from: [mv.from_row, mv.from_col], to: [mv.to_row, mv.to_col] };
                             whiteTime = data.white_time;
                             blackTime = data.black_time;
@@ -1812,7 +1830,9 @@
                                 a11yMsg += checkMsg;
                             } else {
                                 highlightCheck();
-                                showStatus('Your turn.', false);
+                                if (!hasThreefoldWarning) {
+                                    showStatus('Your turn.', false);
+                                }
                             }
                             if (a11yMsg) announceMove(a11yMsg);
 
