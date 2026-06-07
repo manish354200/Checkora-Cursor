@@ -610,6 +610,27 @@ def check_username(request):
     return JsonResponse({'available': not exists})
 
 
+REGISTRATION_SESSION_KEYS = (
+    'registration_user_id',
+    'registration_otp_hash',
+    'otp_created_at',
+    'registration_email',
+    'otp_failed_attempts',
+)
+
+
+def _clear_registration_session(request):
+    """Clear all registration-related keys from the session and cache."""
+    user_id = request.session.get('registration_user_id')
+    if user_id and user_id != -1:
+        cache.delete(f"otp_failed_attempts_user_{user_id}")
+    else:
+        cache.delete(f"otp_failed_attempts_session_{request.session.session_key}")
+
+    for key in REGISTRATION_SESSION_KEYS:
+        request.session.pop(key, None)
+
+
 def register_view(request):
     """Handle new user registration with OTP email verification."""
     if request.user.is_authenticated:
@@ -820,10 +841,7 @@ def register_view(request):
                     # This preserves existing inactive accounts for re-verification.
                     if is_new_user:
                         user.delete()
-                    request.session.pop('registration_user_id', None)
-                    request.session.pop('registration_otp_hash', None)
-                    request.session.pop('registration_email', None)
-                    request.session.pop('otp_created_at', None)
+                    _clear_registration_session(request)
                     err_msg = (
                         'Failed to send OTP email. '
                         'Please check your email address and try again.'
@@ -848,23 +866,46 @@ def verify_otp(request):
         messages.error(request, 'Session expired. Please register again.')
         return redirect('register')
 
+    if user_id and user_id != -1:
+        cache_key = f"otp_failed_attempts_user_{user_id}"
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        cache_key = f"otp_failed_attempts_session_{request.session.session_key}"
+
     if request.method == 'POST':
+        # Check expiration first
         otp_created_at = request.session.get('otp_created_at')
+        if otp_created_at and time.time() - otp_created_at > 300:
+            messages.error(
+                request,
+                'OTP has expired. Please register again.',
+            )
+            # Retrieve attempts to preserve across expiration
+            cache_attempts = cache.get(cache_key, 0)
+            session_attempts = request.session.get('otp_failed_attempts', 0)
+            otp_failed_attempts = max(session_attempts, cache_attempts)
 
-        if otp_created_at:
-            if time.time() - otp_created_at > 300:
-                # Security: preserve the inactive account so the
-                # user can re-register without losing their username.
-                messages.error(
-                    request,
-                    'OTP has expired. Please register again.',
-                )
-                request.session.pop('registration_otp_hash', None)
-                request.session.pop('otp_created_at', None)
-                request.session.pop('registration_user_id', None)
-                request.session.pop('registration_email', None)
+            _clear_registration_session(request)
+            if otp_failed_attempts:
+                request.session['otp_failed_attempts'] = otp_failed_attempts
+                cache.set(cache_key, otp_failed_attempts, timeout=900)
 
-                return redirect('register')
+            return redirect('register')
+
+        # Atomic increment of attempts in cache using cache.add and cache.incr
+        session_attempts = request.session.get('otp_failed_attempts', 0)
+        if not cache.add(cache_key, session_attempts + 1, timeout=900):
+            otp_failed_attempts = cache.incr(cache_key)
+        else:
+            otp_failed_attempts = session_attempts + 1
+
+        request.session['otp_failed_attempts'] = otp_failed_attempts
+
+        if otp_failed_attempts > 5:
+            _clear_registration_session(request)
+            messages.error(request, 'Too many incorrect attempts. Please register again.')
+            return redirect('register')
 
         entered_otp = request.POST.get('otp', '').strip()
 
@@ -883,10 +924,7 @@ def verify_otp(request):
                 user.is_active = True
                 user.full_clean()
                 user.save()
-                del request.session['registration_user_id']
-                del request.session['registration_otp_hash']
-                request.session.pop('otp_created_at', None)
-                request.session.pop('registration_email', None)
+                _clear_registration_session(request)
 
                 try:
                     from django.template import TemplateDoesNotExist, TemplateSyntaxError
@@ -924,13 +962,15 @@ def verify_otp(request):
                     request,
                     'User not found. Please register again.'
                 )
-                request.session.pop('registration_otp_hash', None)
-                request.session.pop('otp_created_at', None)
-                request.session.pop('registration_user_id', None)
-                request.session.pop('registration_email', None)
+                _clear_registration_session(request)
                 return redirect('register')
 
         else:
+            if otp_failed_attempts >= 5:
+                _clear_registration_session(request)
+                messages.error(request, 'Too many incorrect attempts. Please register again.')
+                return redirect('register')
+
             messages.error(request, 'Invalid OTP. Please try again.')
 
     remaining_time = 0
