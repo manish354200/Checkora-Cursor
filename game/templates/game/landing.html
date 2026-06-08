@@ -224,10 +224,28 @@
           }, dur+50);
         }
 
-        setInterval(()=>triggerPiece('right'), 450);
-        setInterval(()=>triggerPiece('left'), 550);
-        setInterval(()=>triggerPiece(null), 250);
-        setInterval(()=>triggerPiece(null), 380);
+      const intervals = [];
+      intervals.push(setInterval(()=>triggerPiece('right'), 450));
+      intervals.push(setInterval(()=>triggerPiece('left'), 550));
+      intervals.push(setInterval(()=>triggerPiece(null), 250));
+      intervals.push(setInterval(()=>triggerPiece(null), 380));
+      
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          intervals.forEach(id => clearInterval(id));
+          intervals.length = 0;
+        } else {
+          intervals.push(setInterval(()=>triggerPiece('right'), 450));
+          intervals.push(setInterval(()=>triggerPiece('left'), 550));
+          intervals.push(setInterval(()=>triggerPiece(null), 250));
+          intervals.push(setInterval(()=>triggerPiece(null), 380));
+        }
+      });
+
+      window.addEventListener('beforeunload', () => {
+        intervals.forEach(id => clearInterval(id));
+      });
       </script>
     </main>
 

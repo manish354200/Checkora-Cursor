@@ -333,7 +333,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 2rem 1.5rem 8rem 1.5rem;
+  padding: 2rem 1.5rem 4rem 1.5rem;
   overflow: hidden;
 }
 
@@ -392,7 +392,10 @@ body {
 
 .hero-board-vignette {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
    background: 
     linear-gradient(to bottom, rgba(15,15,26,1) 0%, transparent 15%, transparent 85%, rgba(15,15,26,1) 100%);
   pointer-events: none;
