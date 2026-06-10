@@ -42,6 +42,8 @@ if DEBUG or not IS_PRODUCTION:
 
 # Add extra domains from ALLOWED_HOSTS_EXTRA environment variable
 extra_hosts = [host.strip() for host in os.environ.get('ALLOWED_HOSTS_EXTRA', '').split(',') if host.strip()]
+if '*' in extra_hosts:
+    raise ImproperlyConfigured("ALLOWED_HOSTS_EXTRA must not contain '*'")
 ALLOWED_HOSTS.extend(extra_hosts)
 
 
