@@ -8,6 +8,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import ipaddress
 import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
@@ -233,11 +234,27 @@ TRUSTED_PROXIES = os.environ.get('TRUSTED_PROXIES', '127.0.0.1,::1').split(',')
 TRUSTED_PROXIES = [ip.strip() for ip in TRUSTED_PROXIES if ip.strip()]
 
 # Trusted proxies for password reset rate limiting client IP extraction
-TRUSTED_PROXY_IPS = [
+_trusted_proxy_ips_raw = [
     ip.strip()
     for ip in os.environ.get('TRUSTED_PROXY_IPS', '').split(',')
     if ip.strip()
 ]
+
+TRUSTED_PROXY_IPS = []
+_invalid_trusted_proxy_ips = []
+for entry in _trusted_proxy_ips_raw:
+    try:
+        ipaddress.ip_network(entry, strict=False)
+    except ValueError:
+        _invalid_trusted_proxy_ips.append(entry)
+    else:
+        TRUSTED_PROXY_IPS.append(entry)
+
+if _invalid_trusted_proxy_ips:
+    raise ImproperlyConfigured(
+        "TRUSTED_PROXY_IPS contains invalid IP/CIDR values: "
+        + ", ".join(_invalid_trusted_proxy_ips)
+    )
 
 if IS_PRODUCTION and not TRUSTED_PROXY_IPS:
     raise ImproperlyConfigured(

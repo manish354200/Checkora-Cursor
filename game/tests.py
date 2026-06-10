@@ -391,6 +391,16 @@ class PasswordResetRateLimitTest(TestCase):
         request = RequestFactory().post(self.reset_url, HTTP_X_FORWARDED_FOR='203.0.113.195', REMOTE_ADDR='127.0.0.1')
         self.assertEqual(view._client_ip(request), '203.0.113.195')
 
+    @override_settings(TRUSTED_PROXY_IPS=['127.0.0.1'], IS_PRODUCTION=True)
+    def test_client_ip_uses_rightmost_untrusted_hop(self):
+        view = CustomPasswordResetView()
+        request = RequestFactory().post(
+            self.reset_url,
+            HTTP_X_FORWARDED_FOR='198.51.100.77, 203.0.113.195',
+            REMOTE_ADDR='127.0.0.1',
+        )
+        self.assertEqual(view._client_ip(request), '203.0.113.195')
+
 
 class MoveValidationTest(TestCase):
     """Test move validation wrapper by mocking validate_move."""
@@ -973,7 +983,6 @@ class AIMoveTest(TestCase):
             '/api/new-game/', data=json.dumps({'mode': 'ai'}),
             content_type='application/json'
         )
-
         r = self.client.post('/api/ai-move/', content_type='application/json')
         data = r.json()
         self.assertTrue(data['valid'])
@@ -987,10 +996,7 @@ class AIMoveTest(TestCase):
 
 class OpeningBookTest(SimpleTestCase):
     """Unit tests for the opening-book integration in ChessGame."""
-
-    # ------------------------------------------------------------------
     # FEN key generation
-    # ------------------------------------------------------------------
 
     def test_fen_key_starting_position(self):
         """Starting position must produce the correct standard FEN key."""
