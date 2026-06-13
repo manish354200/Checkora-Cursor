@@ -106,7 +106,7 @@
           >
         </a>
         <div class="nav-links">
-          <a href="#about">About</a>
+          <a href="#about">About Us</a>
           <a href="#features">Features</a>
           <a href="#faq">FAQ</a>
         </div>
@@ -478,6 +478,12 @@
           <h2 class="section-title">About Us</h2>
 
           <div class="about-box">
+
+            <!-- Pause/Play Button -->
+            <button id="aboutPausePlayBtn" class="about-pause-play-btn" aria-label="Pause Auto-Slide">
+                <svg id="icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                <svg id="icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
 
             <!-- Progress Bar -->
             <div class="about-progress-bar">
@@ -1438,59 +1444,126 @@
         });
     }
 
-    // ── Horizontal Scroll Pin ──
-    const pinSection  = document.querySelector('.about-pin-section');
+    // ── Automatic Carousel ──
     const track       = document.getElementById('aboutTrack');
     const progressFill = document.getElementById('aboutProgressFill');
     const currentCardEl = document.getElementById('aboutCurrentCard');
     const dots        = document.querySelectorAll('.about-dot');
     const CARD_COUNT  = 4;
+    let currentCardIndex = 0;
+    let carouselInterval;
+    let isPausedManually = false;
 
-    function updateAboutScroll() {
-        if (!pinSection || !track) return;
+    const pausePlayBtn = document.getElementById('aboutPausePlayBtn');
+    const iconPause = document.getElementById('icon-pause');
+    const iconPlay = document.getElementById('icon-play');
 
-        const rect      = pinSection.getBoundingClientRect();
-        const sectionH  = pinSection.offsetHeight;
-        const viewH     = window.innerHeight;
-
-        // We want horizontal sliding to finish after 3 viewports of scrolling
-        const slideScrollable = (CARD_COUNT - 1) * viewH;
+    function goToCard(index) {
+        currentCardIndex = index;
         
-        // how far into the sliding portion we've scrolled (0 to 1)
-        const scrolled  = Math.max(0, Math.min(1, -rect.top / slideScrollable));
-
-        // translate the track
-        const maxShift  = (CARD_COUNT - 1) * 100; // in vw units via %
-        const shift     = scrolled * maxShift;
-        track.style.transform = `translateX(-${shift}vw)`;
-
-        // progress bar
-        if (progressFill) progressFill.style.width = `${scrolled * 100}%`;
+        // translate the track (each card is 25% of track width)
+        if (track) track.style.transform = `translateX(-${currentCardIndex * 25}%)`;
+        
+        // update progress bar
+        const progress = (currentCardIndex / (CARD_COUNT - 1)) * 100;
+        if (progressFill) progressFill.style.width = `${progress}%`;
 
         // current card index
-        const cardIndex = Math.min(Math.floor(scrolled * CARD_COUNT), CARD_COUNT - 1);
-        if (currentCardEl) currentCardEl.textContent = cardIndex + 1;
+        if (currentCardEl) currentCardEl.textContent = currentCardIndex + 1;
 
         // dots
         dots.forEach((dot, i) => {
-            dot.classList.toggle('active', i === cardIndex);
+            dot.classList.toggle('active', i === currentCardIndex);
         });
-
-        // trigger stat counters when card 1 visible
-        if (cardIndex === 0 && scrolled > 0.05) animateStats();
     }
 
-    window.addEventListener('scroll', updateAboutScroll, { passive: true });
-    updateAboutScroll();
+    function nextCard() {
+        let nextIndex = (currentCardIndex + 1) % CARD_COUNT;
+        goToCard(nextIndex);
+    }
 
-    // dot click — scroll to that card
+    function startCarousel() {
+        if (!carouselInterval && !isPausedManually) {
+            carouselInterval = setInterval(nextCard, 5000);
+        }
+    }
+
+    function stopCarousel() {
+        if (carouselInterval) {
+            clearInterval(carouselInterval);
+            carouselInterval = null;
+        }
+    }
+
+    // dot click — go to that card
     dots.forEach((dot, i) => {
         dot.addEventListener('click', () => {
-            const sectionH = pinSection.offsetHeight;
-            const viewH    = window.innerHeight;
-            const progress = i / CARD_COUNT;
-            const targetY  = pinSection.offsetTop + progress * (sectionH - viewH);
-            window.scrollTo({ top: targetY, behavior: 'smooth' });
+            goToCard(i);
+            stopCarousel();
+            startCarousel(); // reset timer
+        });
+    });
+
+    if (pausePlayBtn) {
+        pausePlayBtn.addEventListener('click', () => {
+            if (isPausedManually) {
+                isPausedManually = false;
+                if (iconPlay) iconPlay.style.display = 'none';
+                if (iconPause) iconPause.style.display = 'block';
+                startCarousel();
+            } else {
+                isPausedManually = true;
+                stopCarousel();
+                if (iconPause) iconPause.style.display = 'none';
+                if (iconPlay) iconPlay.style.display = 'block';
+            }
+        });
+    }
+
+    if (track) {
+        goToCard(0);
+        startCarousel();
+
+        // Pause on hover
+        const aboutBox = document.querySelector('.about-box');
+        if (aboutBox) {
+            aboutBox.addEventListener('mouseenter', () => {
+                if (!isPausedManually) stopCarousel();
+            });
+            aboutBox.addEventListener('mouseleave', () => {
+                if (!isPausedManually) startCarousel();
+            });
+        }
+    }
+
+    // trigger stat counters when about section is visible
+    const aboutObserver = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                animateStats();
+                aboutObserver.disconnect();
+            }
+        });
+    }, { threshold: 0.3 });
+
+    const aboutSection = document.querySelector('.about-pin-section');
+    if (aboutSection) {
+        aboutObserver.observe(aboutSection);
+    }
+
+    // ── Smooth Scrolling for Anchor Links ──
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                e.preventDefault();
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
         });
     });
   </script>
