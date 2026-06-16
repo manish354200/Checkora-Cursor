@@ -1,0 +1,37 @@
+{% extends "game/board.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'game/css/forum.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <a href="{% url 'forum' %}" class="forum-back-link">← Back to Forum</a>
+
+    <div class="forum-new-card">
+        <h1 class="forum-detail-title">Start a New Discussion</h1>
+
+        <form method="post" class="forum-new-form">
+            {% csrf_token %}
+
+            <div class="forum-form-group">
+                <label for="{{ form.title.id_for_label }}">Title</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <p class="forum-error">{{ form.title.errors|first }}</p>
+                {% endif %}
+            </div>
+
+            <div class="forum-form-group">
+                <label for="{{ form.content.id_for_label }}">Content</label>
+                {{ form.content }}
+                {% if form.content.errors %}
+                    <p class="forum-error">{{ form.content.errors|first }}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="forum-btn-submit">Create Discussion</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

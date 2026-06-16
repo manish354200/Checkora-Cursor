@@ -1,0 +1,43 @@
+{% extends "game/board.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'game/css/forum.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <div class="forum-header">
+        <h1 class="forum-title">Community <span class="gold">Forum</span></h1>
+        <p class="forum-subtitle">Discuss strategies, ask questions, and connect with fellow players.</p>
+        {% if user.is_authenticated %}
+            <a href="{% url 'forum_new' %}" class="forum-btn-new">+ New Discussion</a>
+        {% else %}
+            <a href="{% url 'login' %}" class="forum-btn-new">Login to Participate</a>
+        {% endif %}
+    </div>
+
+    <div class="forum-list">
+        {% for discussion in discussions %}
+        <a href="{% url 'forum_detail' discussion.id %}" class="forum-card">
+            <div class="forum-card-main">
+                <h3 class="forum-card-title">{{ discussion.title }}</h3>
+                <p class="forum-card-excerpt">{{ discussion.content|truncatewords:25 }}</p>
+                <div class="forum-card-meta">
+                    <span class="forum-author">{{ discussion.user.username }}</span>
+                    <span class="forum-dot">•</span>
+                    <span class="forum-date">{{ discussion.created_at|date:"M d, Y" }}</span>
+                </div>
+            </div>
+            <div class="forum-card-stats">
+                <span class="forum-reply-count">{{ discussion.replies.count }}</span>
+                <span class="forum-reply-label">Replies</span>
+            </div>
+        </a>
+        {% empty %}
+        <div class="forum-empty">
+            <p>No discussions yet. Be the first to start one!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
