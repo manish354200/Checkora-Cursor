@@ -1556,7 +1556,6 @@
                     `${toSquare(fr, fc)}-${toSquare(tr, tc)}`;
 
                 if (
-                    expectedMove &&
                     playedMove.toLowerCase() !== expectedMove.toLowerCase()
                 ) {
                     showStatus(
