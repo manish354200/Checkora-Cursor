@@ -2282,6 +2282,26 @@ class AdditionalViewsSecurityAndLessonsTest(TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
+    def test_lessons_map_guest_user_shows_alert(self):
+        """Guest users should see the sign-in alert banner on the lessons map page."""
+        response = self.client.get(reverse('lessons'))
+        self.assertEqual(response.status_code, 200)
+        # Check that the alert is rendered
+        self.assertContains(response, 'id="guest-alert"')
+        self.assertContains(response, 'Sign in')
+        self.assertContains(response, 'create a free account')
+        self.assertContains(response, 'to save your lesson progress.')
+
+    def test_lessons_map_authenticated_user_hides_alert(self):
+        """Authenticated users should not see the sign-in alert banner on the lessons map page."""
+        User.objects.create_user(username='lesson_player', password='password123')
+        self.client.login(username='lesson_player', password='password123')
+        response = self.client.get(reverse('lessons'))
+        self.assertEqual(response.status_code, 200)
+        # Check that the alert is NOT rendered
+        self.assertNotContains(response, 'id="guest-alert"')
+        self.assertNotContains(response, 'to save your lesson progress.')
+
 
 @override_settings(CACHES={
     'default': {
@@ -2902,3 +2922,43 @@ class ChessPuzzleDailyApiTest(TestCase):
         )
         with self.assertRaises(ValidationError):
             puzzle2.save()
+
+
+class LeaderboardAndAchievementsViewOriginalTest(TestCase):
+    """Test leaderboard and achievements views with original templates."""
+
+    def test_leaderboard_anonymous(self):
+        response = self.client.get(reverse('leaderboard'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_achievements_anonymous(self):
+        response = self.client.get(reverse('achievements'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_leaderboard_authenticated(self):
+        password = 'Password123!'
+        User.objects.create_user(
+            username='testuser',
+            password=password,
+            email='testuser@example.com'
+        )
+        self.client.login(username='testuser', password=password)
+        response = self.client.get(reverse('leaderboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'game/leaderboard.html')
+        self.assertContains(response, "No leaderboard data available.")
+        self.assertContains(response, "No chess rating data available.")
+
+    def test_achievements_authenticated(self):
+        password = 'Password123!'
+        User.objects.create_user(
+            username='testuser',
+            password=password,
+            email='testuser@example.com'
+        )
+        self.client.login(username='testuser', password=password)
+        response = self.client.get(reverse('achievements'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'game/achievements.html')
+        self.assertContains(response, "Achievements Unlocked")
+        self.assertContains(response, "No featured badges selected yet.")
