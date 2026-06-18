@@ -385,6 +385,9 @@ class GameRecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(default=_expires_at_default, db_index=True)
     
+    class Meta:
+        ordering = ["-created_at"]
+
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
