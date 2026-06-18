@@ -3018,6 +3018,18 @@ class UpdatePuzzleStatsViewTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(json.loads(response.content), {'error': 'invalid json'})
 
+    def test_non_object_json_returns_400(self):
+        from . import views
+        request = self.factory.post(
+            '/api/puzzle-stats/update/',
+            data=json.dumps([]),
+            content_type='application/json'
+        )
+        request.user = self.user
+        response = views.update_puzzle_stats(request)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', json.loads(response.content))
+
     def test_valid_json_updates_stats(self):
         from . import views
         payload = {
@@ -3038,6 +3050,33 @@ class UpdatePuzzleStatsViewTest(TestCase):
         self.assertEqual(stats.current_streak, 3)
         self.assertEqual(stats.best_streak, 5)
         self.assertEqual(stats.daily_completions, 1)
+
+    def test_partial_json_payload_uses_existing_stats(self):
+        from . import views
+        from game.models import PuzzleStats
+        PuzzleStats.objects.create(
+            user=self.user,
+            puzzles_solved=10,
+            current_streak=4,
+            best_streak=10,
+            daily_completions=2
+        )
+        
+        payload = {
+            'current_streak': 5,
+            'best_streak': 12
+        }
+        request = self.factory.post('/api/puzzle-stats/update/', data=json.dumps(payload), content_type='application/json')
+        request.user = self.user
+        response = views.update_puzzle_stats(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content), {'success': True})
+        
+        stats = PuzzleStats.objects.get(user=self.user)
+        self.assertEqual(stats.current_streak, 5)
+        self.assertEqual(stats.best_streak, 12)
+        self.assertEqual(stats.puzzles_solved, 10)
+        self.assertEqual(stats.daily_completions, 2)
 
     def test_negative_values_return_400(self):
         from . import views
