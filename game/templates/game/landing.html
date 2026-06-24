@@ -135,7 +135,7 @@
         </div>
         {% if user.is_authenticated %}
         <div class="profile-dropdown">
-          <button type="button" class="profile-btn" onclick="event.stopPropagation(); this.parentElement.classList.toggle('active')">{{ user.username }} <svg class="profile-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button>
+          <button type="button" class="profile-btn">{{ user.username }} <svg class="profile-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button>
           <div class="dropdown-content">
             <a href="/play/"> Dashboard </a>
 
