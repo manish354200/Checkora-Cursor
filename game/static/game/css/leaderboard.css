@@ -5,7 +5,7 @@
 body {
     background: var(--bg-primary, #0f0f1a);
     color: var(--text-primary, white);
-    font-family: 'Inter', Arial, sans-serif;
+    font-family: Inter, Arial, sans-serif;
     padding: 20px;
     max-width: 1000px;
     margin: 0 auto;
@@ -122,23 +122,30 @@ h1 {
 
 .tab-panel.active {
     display: block;
-    animation: fadeIn 0.3s ease-in-out;
+    animation: fade-in 0.3s ease-in-out;
 }
 
-@keyframes fadeIn {
+@keyframes fade-in {
     from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Table styling */
-table {
+/* Table container for overflow scroll */
+.table-container {
     width: 100%;
-    border-collapse: collapse;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     margin-top: 10px;
     background: var(--card-bg, #16162a);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0;
 }
 
 th, td {
@@ -265,7 +272,7 @@ tr:hover td {
     color: var(--text-title, #000000);
 }
 
-[data-theme="light"] table {
+[data-theme="light"] .table-container {
     background: var(--card-bg, #ffffff);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }

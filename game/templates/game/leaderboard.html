@@ -33,12 +33,13 @@
 
     <!-- Tabs Header -->
     <div class="tabs-container">
-        <button class="tab-button active" data-tab="puzzle">🏆 Puzzle Leaderboard</button>
-        <button class="tab-button" data-tab="chess">♟ Chess Rating Leaderboard</button>
+        <button type="button" class="tab-button active" data-tab="puzzle">🏆 Puzzle Leaderboard</button>
+        <button type="button" class="tab-button" data-tab="chess">♟ Chess Rating Leaderboard</button>
     </div>
 
     <!-- Puzzle Tab Panel -->
     <div id="puzzle-tab" class="tab-panel active">
+        <div class="table-container">
         <table>
             <thead>
                 <tr>
@@ -77,10 +78,12 @@
                 </tr>
             </tbody>
         </table>
+        </div>
     </div>
 
     <!-- Chess Tab Panel -->
     <div id="chess-tab" class="tab-panel">
+        <div class="table-container">
         <table>
             <thead>
                 <tr>
@@ -125,6 +128,7 @@
                 </tr>
             </tbody>
         </table>
+        </div>
     </div>
 
     <script>
