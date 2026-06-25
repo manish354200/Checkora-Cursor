@@ -93,14 +93,39 @@ Handles:
 
 ---
 
+## auth.js
+
+Handles frontend authentication interactions including login, registration, session handling, and authentication-related requests.
+
+---
+
+## lesson_board.js
+
+Provides reusable chessboard rendering functionality specifically for lesson pages and educational content.
+
+---
+
+## lesson_coordinates.js
+
+Manages board coordinate labels and orientation used throughout lesson interfaces.
+
+---
+
+## roadmap_connectors.js
+
+Draws and updates the visual connectors between lesson roadmap nodes, helping users understand lesson progression.
+
 # Event Flow
+
+## Gameplay Flow
 
 ## Gameplay Flow
 
 User Move
 → board.js
 → Client-side Validation (Stockfish Worker)
-→ Backend Synchronization (when required)
+→ WebSocket / Backend Communication
+→ Opponent & Game State Update
 → Board Update
 → UI Refresh
 
