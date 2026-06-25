@@ -88,10 +88,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateToggleState(savedTheme);
 
+    let transitionTimeout = null;
+
     if (toggle) {
         toggle.addEventListener("click", () => {
             const currentTheme = document.documentElement.getAttribute("data-theme");
             const newTheme = currentTheme === "light" ? "dark" : "light";
+
+            // Clear any active transition timeout to handle rapid toggles
+            if (transitionTimeout) {
+                clearTimeout(transitionTimeout);
+            }
 
             // Temporarily enable theme transitions
             document.documentElement.classList.add("theme-transition");
@@ -103,8 +110,9 @@ document.addEventListener("DOMContentLoaded", () => {
             showThemeToast(`Switched to ${newTheme === "light" ? "Light" : "Dark"} Mode`, "info");
 
             // Remove the class after the transition finishes (0.3s)
-            setTimeout(() => {
+            transitionTimeout = setTimeout(() => {
                 document.documentElement.classList.remove("theme-transition");
+                transitionTimeout = null;
             }, 300);
         });
     }
